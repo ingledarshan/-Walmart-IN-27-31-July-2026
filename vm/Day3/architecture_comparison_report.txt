@@ -1,0 +1,37 @@
+ARCHITECTURE COMPARISON REPORT
+Advanced Agentic AI -- Production Engineering | India Track
+Module 2 -- Agent Architecture and Orchestration
+============================================================
+
+USE CASE: Walmart Customer Support Automation
+Test queries: 5
+
+LATENCY COMPARISON
+  Sequential avg latency : 4.90s
+  Router avg latency     : 3.67s
+  Supervisor avg latency : 4.39s
+
+PATTERN ASSESSMENT
+
+SEQUENTIAL
+  Strengths  : Full audit trail, predictable cost, quality gate at every step
+  Weaknesses : Highest latency (fixed 4 LLM calls), over-engineered for simple queries
+  Best for   : Regulated workflows, financial advice, medical triage
+
+ROUTER
+  Strengths  : Fastest for well-categorised queries, small specialist context
+  Weaknesses : No re-routing on failure, struggles with multi-domain queries
+  Best for   : High-volume, single-domain customer support, FAQ bots
+
+SUPERVISOR
+  Strengths  : Re-routes on poor answers, handles multi-step complex queries
+  Weaknesses : Highest LLM cost, supervisor is a bottleneck
+  Best for   : Complex queries spanning multiple domains, research assistants
+
+RECOMMENDATION FOR WALMART RETAIL ASSISTANT
+  Pattern    : Router (primary) with Supervisor fallback for complex queries
+  Rationale  : 80% of Walmart support queries are single-domain (product OR order).
+               Router handles these efficiently. Supervisor activates for the 20%
+               that span domains (e.g. product availability + return policy together).
+  Cost model : Router: 2 LLM calls avg. Supervisor: 3-4 LLM calls avg.
+               At 50,000 queries/day: Route-first saves ~100,000 LLM calls/day.

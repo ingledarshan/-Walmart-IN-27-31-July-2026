@@ -1,0 +1,53 @@
+FRAMEWORK SELECTION MATRIX
+Advanced Agentic AI -- Production Engineering | India Track
+Module 1 -- Engineering Decisions for AI Systems
+==============================================================
+
+USE CASE: Walmart India Retail Assistant
+50,000+ queries/day | 4,700 stores | P95 < 3s SLO
+
+LIVE DATA VERIFIED DURING THIS SESSION
+  OpenWeatherMap -- Bengaluru: 27.6 C, overcast clouds, humidity 61%
+  Tavily Search  -- 3 market articles retrieved for Bengaluru
+
+PROTOCOL SELECTION
+  Choice : MCP (FastMCP)
+  REST latency observed  : 14.16s | Cost: $0.00042
+  MCP latency observed   : 14.16s | Cost: $0.00042
+  Decision factor: Schema standardisation for multi-agent reuse across 4,700 stores
+
+FRAMEWORK SELECTION
+  Choice   : LangGraph
+  Rejected : LangChain (insufficient stateful multi-agent control)
+  Rejected : Python-only (too much custom scaffolding at 50k+ queries/day)
+  Decision factor: Typed StateGraph + human-in-the-loop checkpointing
+
+BUILD vs BUY DECISIONS
+  Orchestration framework (LangGraph)
+    Decision : BUY + CUSTOMIZE (score: 9/15)
+    Rationale: Start with vendor solution, extend where differentiation matters
+  RAG vector store (Chroma vs Pinecone)
+    Decision : BUY (score: 8/15)
+    Rationale: Commodity capability; vendor delivers faster and cheaper
+  Walmart domain knowledge base (Q&A dataset)
+    Decision : BUILD (score: 11/15)
+    Rationale: Component creates differentiation or vendor risk is too high to accept
+  LLM inference (OpenAI API vs self-hosted)
+    Decision : BUY (score: 8/15)
+    Rationale: Commodity capability; vendor delivers faster and cheaper
+  MCP tool server (FastMCP vs custom HTTP)
+    Decision : BUY + CUSTOMIZE (score: 9/15)
+    Rationale: Start with vendor solution, extend where differentiation matters
+
+RECOMMENDED PRODUCTION STACK
+  Protocol        : MCP (FastMCP server, open-source)
+  Orchestration   : LangGraph (StateGraph, typed state, checkpointing)
+  Vector store    : Pinecone (managed, buy)
+  Knowledge base  : Walmart internal Q&A dataset (build)
+  LLM inference   : OpenAI API gpt-4o-mini (buy, re-evaluate at 100k+ daily queries)
+  Evaluation gate : Task Success Rate >= 0.80 on 100-case Walmart golden dataset
+
+TOOL INTEGRATIONS DEMONSTRATED LIVE IN THIS SESSION
+  OpenWeatherMap : REST and MCP -- real weather data every invocation
+  Tavily Search  : REST and MCP -- real market demand signals every invocation
+  FastMCP        : Real MCP server with auto-discovered tool schemas and live tool execution

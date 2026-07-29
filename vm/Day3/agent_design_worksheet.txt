@@ -1,0 +1,35 @@
+AGENT DESIGN WORKSHEET
+Advanced Agentic AI -- Production Engineering | India Track
+Module 2 -- Agent Architecture and Orchestration
+============================================================
+
+USE CASE: Walmart Retail Assistant
+
+AGENT ANATOMY
+  Planning   : LangGraph graph topology encodes step sequence
+  Memory     : Shared message list in AgentState (in-session)
+  State      : TypedDict -- messages + route (multi-agent)
+  Tool Calling: 4 tools split 2+2 across specialists (multi)
+  Action     : Final specialist LLM response grounded in tool output
+
+DECISION SCORING (Walmart Retail Assistant)
+  Tool count score        : 2/3
+  Domain breadth score    : 2/3
+  Parallelism score       : 2/3
+  Governance isolation    : 2/3
+  Blast radius score      : 2/3
+  TOTAL                   : 10/15
+  RECOMMENDATION          : MULTI-AGENT
+
+LATENCY COMPARISON
+  Single-agent avg        : 6.14s
+  Multi-agent avg         : 5.93s
+  Coordinator overhead    : ~0.00s
+
+ARCHITECTURE DECISION
+  Selected: Multi-Agent (Coordinator + Product Specialist + Service Specialist)
+  Rationale:
+    - Separates product domain from customer service domain
+    - Reduces per-agent context: each specialist sees only 2 tools
+    - Enables independent scaling and failure isolation per domain
+    - Coordinator overhead justified by governance and blast-radius reduction
