@@ -1,0 +1,44 @@
+Component & Deliverable
+Full Credit — All criteria met
+Partial Credit — Key gaps present
+Technical Gate / Must-Pass Threshold
+Pts
+T1 Architecture & ADR
+capstone_adr.txt
+Decision matrix comparing all 3 options — RAG+Agent, RAG+Workflow, Traditional Search; all 4 axes scored 1-5 with exact weights (cost 30%, latency 25%, quality 30%, maintainability 15%); RAG+Agent identified as winner with highest weighted composite score; ADR includes Status, Context, Decision, Consequences; capstone_adr.txt saved to disk
+Matrix present but only 2 options compared; weights incorrect or 1 axis missing; winner identified without numerical justification; ADR missing 1-2 sections; file not saved
+All 3 options (RAG+Agent, RAG+Workflow, Traditional Search) must be scored; all 4 axes with exact weights must be present; ADR Status must read Accepted; file must exist on disk
+15
+T2 Agent Strategy
+In-notebook execution
+WalmartRetailAgent with all 4 methods implemented: classify(), select_tool(), select_model(), run(); query classified into 1 of 5 categories (price, order, policy, hours, multi_step); gpt-4-turbo for multi_step, gpt-4o-mini for all others; all 5 test queries return a dict with all 7 fields: answer, model_used, input_tokens, output_tokens, cost_usd, latency_ms, tool_used; token budget enforced (<= 800 input / <= 150 output)
+Agent class defined but 1 method missing or broken; 3-4 of 5 test queries succeed; model routing applied but wrong model for 1 category; 1-2 response fields absent; token budget not enforced
+All 5 test queries must return complete response dict with all 7 required fields; gpt-4-turbo used exclusively for multi_step queries; token budget check must appear in code, not just documentation
+25
+T3 Evaluation Scorecard
+capstone_evaluation_scorecard.txt
+All 10 GOLDEN_DATASET records (G001-G010) evaluated against agent output; all 6 metrics computed per record; LLM-as-judge (0-3 rubric from IN11, normalised /3) used for faithfulness and answer_relevancy; explicit PASS/FAIL verdict per metric against all 6 THRESHOLDS; aggregate scorecard saved to capstone_evaluation_scorecard.txt
+7-9 records evaluated; 4-5 metrics computed; LLM judge replaced with static heuristic; scorecard file saved but missing aggregate PASS/FAIL verdict or threshold comparison
+faithfulness >= 0.85  |  answer_relevancy >= 0.75  |  toxicity <= 0.10  |  hit_rate_at_3 >= 0.75  |  task_success_rate >= 0.90  |  tool_call_accuracy >= 0.95  — all 6 must be checked and reported
+20
+T4 Cost Model
+In-notebook computation
+3 scenarios computed at DAILY_CALLS=100,000: Scenario 1 — baseline (all gpt-4-turbo, no optimisation); Scenario 2 — model routing from Task 2 applied; Scenario 3 — Scenario 2 + 20% cache hit rate + 18% token compression; monthly spend shown for all 3; Scenario 3 confirmed <= $1,500/month; worst-case (cache failure) analysis provided
+2 of 3 scenarios computed; monthly projection present but ceiling check absent; optimisation techniques partially applied; no worst-case cache-failure analysis
+Scenario 3 monthly spend must be <= $1,500 (MONTHLY_CEILING); DAILY_CALLS = 100,000 must be baseline; both 20% cache and 18% compression must be applied in Scenario 3; gpt-4-turbo baseline required in Scenario 1
+15
+T5 Deployment Model
+capstone_deployment_model.txt
+All 6 required sections present with substantive content: (1) change types and pipeline paths, (2) pre-deployment gate — evaluation scorecard must PASS, (3) deployment steps staging->canary->production, (4) rollback trigger conditions, (5) rollback steps, (6) on-call runbook summary; rollback time target < 30 min explicitly stated; file saved
+4-5 sections present; pre-deployment gate not linked to scorecard; rollback steps or on-call runbook section missing or placeholder only; staging->canary->production path not described
+All 6 section headings must have substantive non-placeholder content; rollback time target (< 30 min) must be explicitly stated; pre-deployment gate must reference evaluation scorecard PASS as a required condition
+15
+T6 Risk Mitigation Plan
+capstone_risk_register.txt
+All 6 exact risk categories covered: hallucination, prompt_injection, pii_leakage, model_drift, cost_overrun, dependency_failure; all 5 fields per entry (likelihood, impact, detection, mitigation, owner); detection methods describe specific observable signals; mitigations are concrete and actionable; saved as JSON to capstone_risk_register.txt
+4-5 categories present; 3-4 fields per entry; detection methods generic ('monitor the system'); owner field blank; mitigation is a placeholder or catch-all statement
+All 6 category names must exactly match RISK_CATEGORIES list in notebook; each entry must include all 5 fields (likelihood, impact, detection, mitigation, owner); detection must name a specific, observable signal — not a generic statement
+10
+Pass: >= 65 pts   |   Distinction: >= 85 pts   |   Technical gate failure = max 50% of task points   |   TOTAL
+100
+ARB DEFENCE QUESTIONS   T1: Why an agent and not a deterministic workflow for this use case?   |   T2: What happens when the query classifier misclassifies a query?   |   T3: Refer to IN15 ARB question bank   |   T4: What is your worst-case monthly spend if the cache fails?   |   T5: If a prompt change degrades faithfulness from 0.88 to 0.76, how quickly can you roll back?   |   T6: What is your detection and response plan for silent quality drift?

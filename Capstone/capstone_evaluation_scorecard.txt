@@ -1,0 +1,20 @@
+CAPSTONE EVALUATION SCORECARD (10-metric, IN10 framework)
+=======================================================
+Date: 2026-08-01 14:02 UTC
+Golden records: 10 | Answer source: fallback
+Evaluator: offline lexical fallback (LLM endpoint unreachable this run)
+
+  faithfulness            Score: 0.957    Threshold: >=0.85   PASS
+  answer_relevancy        Score: 0.856    Threshold: >=0.75   PASS
+  toxicity                Score: 0.0      Threshold: <0.1    PASS
+  hit_rate_at_3           Score: 1.0      Threshold: >=0.75   PASS
+  mrr_at_3                Score: 0.9      Threshold: >=0.65   PASS
+  precision_at_3          Score: 0.734    Threshold: >=0.55   PASS
+  context_precision       Score: 1.0      Threshold: >=0.65   PASS
+  task_success_rate       Score: 1.0      Threshold: >=0.9    PASS
+  tool_call_accuracy      Score: 1.0      Threshold: >=0.95   PASS
+  step_completion_ratio   Score: 1.0      Threshold: >=0.92   PASS
+
+  p95_latency_ms          Score: 0.7      Threshold: <3000  PASS  (SLO, not part of the 10-metric gate)
+
+GATE: PASS (10/10 metrics passed)

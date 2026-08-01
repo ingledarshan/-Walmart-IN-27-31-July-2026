@@ -1,0 +1,75 @@
+ADR-001: Use RAG + Agent (LangGraph) for Walmart Retail Assistant
+================================================================
+Date    : 2026-08-01
+Status  : Accepted
+Deciders: ML Platform Team, Engineering Manager, Principal Architect
+
+CONTEXT
+  The Walmart Retail Assistant serves 100,000 queries/day across five categories
+  (price, order, policy, hours, multi_step). Multi-intent queries require
+  sequential/conditional tool calls (price -> inventory -> policy); simple prompt-
+  completion cannot maintain state across those steps.
+
+DECISION MATRIX (1-5, 5 = best; weights: cost 30%, latency 25%, quality 30%, maintainability 15%)
+  Option                          cost         latency         quality maintainability  Weighted
+  RAG + Agent                        3               4               5               3      3.85
+  RAG + Workflow                     4               4               3               4      3.70
+  Traditional Search                 5               5               1               5      3.80
+
+DECISION
+  Adopt RAG + Agent. A LangGraph-style supervisor (simulated in-process in this
+  notebook) routes to worker tools: price_lookup, order_status, policy_search,
+  store_hours; shared state is held in a TypedDict-style dict.
+
+RATIONALE
+  RAG + Agent is recommended because the workload is dominated by natural-
+  language, multi-intent queries (product comparison, order status, policy
+  retrieval, in-stock plus aisle) that require conditional tool dispatch and
+  state carried across steps. Quality is the highest-weighted axis (30%) and
+  only the agent scores 5/5 on it: a deterministic workflow (3/5) cannot branch
+  dynamically when a single query combines multiple intents, and Traditional
+  Search (1/5) cannot interpret natural language or perform comparisons at all.
+  The agent premium on cost and latency is bounded because roughly 90% of
+  traffic is single-hop lookups routed to gpt-4o-mini with response caching,
+  keeping P95 latency under the 3s SLO and monthly spend under the $1,500
+  ceiling. Traditional Search is disqualified by the quality hard-gate (< 3);
+  the genuine trade-off is Agent vs Workflow, which the agent wins on functional
+  capability.
+
+OPTIONS CONSIDERED
+  RAG + Agent  (3.85) -- CHOSEN: native graph state, conditional
+               routing, highest quality (5/5). Con: framework dependency.
+  RAG + Workflow (3.7) -- simpler/maintainable but cannot handle
+               multi-intent or conditional branching (quality 3/5).
+  Traditional Search (3.8) -- cheapest/fastest but DISQUALIFIED by
+               the quality gate: no NL understanding or comparisons (quality 1/5).
+
+ARB QUESTION -- "Why an agent and not a deterministic workflow?"
+  ~10% of traffic is multi-intent (compare products, in-stock + aisle). A fixed
+  workflow needs a hand-coded branch per intent combination and still fails on novel
+  combinations. The agent selects tools dynamically at run time, so new intents are
+  handled without redeploying a new DAG. The deterministic path is retained for the
+  90% single-hop traffic to protect latency and cost (hybrid backbone).
+
+CONSEQUENCES
+  Positive : multi-step queries handled natively; extensible worker nodes.
+  Negative : team must learn LangGraph; upgrade risk on breaking changes.
+  Mitigation: pin framework version; integration tests on every dependency bump;
+              deterministic fallback answer when the LLM endpoint is unavailable.
+
+EVIDENCE STANDARD (IN15: claim -> evidence -> boundary -> fallback -> owner)
+  Claim: the agent meets quality, latency and cost SLOs for the retail workload.
+  Evidence: Task 3 10-metric scorecard (IN10) + Task 4 cost model (IN13).
+  Operating boundary: 100k calls/day, <=800 input / <=150 output tokens per call.
+  Fallback: deterministic grounded answer; gpt-4o-mini downgrade under load.
+  Owner: ML Platform Team.
+
+LAUNCH-BLOCKING CONDITIONS
+  All 10 IN10 evaluation gates PASS; P95 latency < 3000 ms; monthly spend < $1,500.
+  Any breach blocks launch until fixed or explicitly carried as a review condition.
+
+DECISION AUTHORITY : Principal Architect (ARB chair)
+SYSTEM OF RECORD   : capstone_adr.txt + ADR registry linked from the ARB ticket
+REVISIT TRIGGERS   : reopen when a trigger fires (not only on a calendar date) --
+  7-day rolling faithfulness drop > 0.05, P95 > 3s sustained, monthly spend
+  trending > $1,500, or LangGraph v2.0 release; scheduled backstop review 2027-01-01.

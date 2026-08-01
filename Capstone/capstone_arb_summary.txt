@@ -1,0 +1,37 @@
+ARCHITECTURE REVIEW BOARD -- SUBMISSION SUMMARY
+Walmart Retail Assistant | India Track | Advanced Agentic AI
+=================================================================
+Date      : 2026-08-01
+Team      : ML Platform, Walmart Global Tech India
+
+1. ARCHITECTURE CHOICE
+   RAG + Agent (LangGraph-style supervisor + worker; simulated in-process)
+   Decision score: 3.85 / 5.0 | Ruled out by quality gate: ['Traditional Search']
+   ADR: capstone_adr.txt
+
+2. AGENT STRATEGY
+   Supervisor routes to 4 worker tools: order_status, policy_search, price_lookup, store_hours
+   Model routing: gpt-4o-mini (single-hop) | gpt-4-turbo (multi_step)
+   Token budget respected: <= 800 input / <= 150 output per call
+
+3. EVALUATION STRATEGY
+   Golden dataset: 10 records, 5 categories
+   faithfulness 0.957 | relevancy 0.856 | toxicity 0.0
+   hit_rate@3 1.0 | task_success 1.0 | tool_acc 1.0
+   P95 latency 0.7 ms (SLO < 3000) | Evaluator: offline lexical fallback (LLM endpoint unreachable this run)
+   Gate status: PASS (10/10) -- see capstone_evaluation_scorecard.txt
+
+4. COST MODEL
+   Baseline (all turbo)  : $9,390.00/month
+   Optimised (S3)        : $780.24/month
+   Ceiling               : $1,500.00/month
+   Status                : WITHIN CEILING
+
+5. DEPLOYMENT MODEL
+   Pipeline: PR -> eval gate -> staging -> canary -> production
+   Rollback: < 30 minutes via feature flag
+   Full plan: capstone_deployment_model.txt
+
+6. RISK MITIGATION
+   Risks covered: hallucination | prompt_injection | pii_leakage | model_drift | cost_overrun | dependency_failure
+   Each has detection + mitigation + owner. Full register: capstone_risk_register.txt

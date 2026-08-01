@@ -1,0 +1,45 @@
+{
+  "hallucination": {
+    "likelihood": "Medium",
+    "impact": "High (wrong price or policy erodes customer trust)",
+    "detection": "Faithfulness < 0.85 in rolling evaluation; Langfuse groundedness alert",
+    "mitigation": "Answer strictly from retrieved context; faithfulness gate in eval pipeline; human review when score < 0.70; deterministic extractive fallback",
+    "owner": "ML Platform Team"
+  },
+  "prompt_injection": {
+    "likelihood": "Medium (retail context lowers incentive)",
+    "impact": "High (system-prompt leak, off-topic or unsafe responses)",
+    "detection": "Output monitoring for instruction-following violations; monthly red-team",
+    "mitigation": "System-prompt hardening (IN08); input sanitisation; output-format validation; context-only answering so injected instructions lack grounding",
+    "owner": "Security Team"
+  },
+  "pii_leakage": {
+    "likelihood": "Low (order IDs are not sensitive PII)",
+    "impact": "Critical if personal data (name, address) is logged",
+    "detection": "Log scanning with PII regex; Langfuse data masking",
+    "mitigation": "Never log full query in prod; hash/truncate identifiers; annual GDPR audit",
+    "owner": "Data Governance Team"
+  },
+  "model_drift": {
+    "likelihood": "Low (model versions are pinned)",
+    "impact": "High (silent quality degradation over weeks)",
+    "detection": "Weekly automated IN11 benchmark; 7-day rolling faithfulness trend; canary A/B",
+    "mitigation": "Pin model version; weekly regression gate; alert on 7-day faithfulness drop > 0.05; auto-page on aggregate delta < -0.03",
+    "owner": "ML Platform Team"
+  },
+  "cost_overrun": {
+    "likelihood": "Medium (traffic spikes on promotions)",
+    "impact": "High (budget exhausted mid-month)",
+    "detection": "Daily spend alerts at 70% and 85% of budget (IN14 BudgetGovernor)",
+    "mitigation": "Hard cap with fallback responses; AutoScalingPolicy downgrades to gpt-4o-mini and raises cache TTL under load; per-team chargeback",
+    "owner": "Engineering Manager"
+  },
+  "dependency_failure": {
+    "likelihood": "Low (OpenAI SLA 99.9%; Pinecone SLA 99.9%)",
+    "impact": "Critical (full service outage)",
+    "detection": "Health-check endpoint; span error rate > 0% triggers alert",
+    "mitigation": "Circuit breaker (IN07); deterministic grounded fallback answer (implemented in the agent); cached responses; secondary model endpoint",
+    "owner": "ML Platform Team"
+  },
+  "_silent_drift_response_plan": "Silent drift is caught by a weekly automated IN11 benchmark against the frozen golden dataset plus a 7-day rolling faithfulness trend in Langfuse; an alert fires on a >0.05 drop or an aggregate quality delta < -0.03. Response: freeze the current version, open an incident, run the full Task-3 scorecard on a fresh sample, and roll back the model/prompt via feature flag if the gate fails."
+}

@@ -1,0 +1,61 @@
+
+CAPSTONE DEPLOYMENT MODEL -- Walmart Retail Assistant
+=====================================================
+Date: 2026-08-01
+Owner: ML Platform Team, Walmart Global Tech India
+
+1. CHANGE TYPES AND PIPELINE PATHS
+   System prompt change : PR -> eval gate -> staging -> canary 5%  -> prod (2h ramp)
+   Model version change : PR -> full IN11 regression -> staging -> canary 10% -> prod
+   RAG config change    : PR -> retrieval eval (hit_rate, MRR) -> staging -> prod
+   Tool logic change    : PR -> unit tests + tool_call_accuracy eval -> staging -> prod
+   All changes ship behind a feature flag so traffic can be shifted without redeploy.
+
+2. PRE-DEPLOYMENT GATE (ALL MUST PASS -- from Task 3 / IN10)
+   faithfulness       >= 0.85
+   answer_relevancy   >= 0.75
+   toxicity           <  0.10
+   hit_rate @ 3       >= 0.75
+   mrr @ 3            >= 0.65
+   precision @ 3      >= 0.55
+   context_precision  >= 0.65
+   task_success_rate  >= 0.90
+   tool_call_accuracy >= 0.95
+   step_completion    >= 0.92
+   P95 latency        <  3000 ms (measured on staging under synthetic load)
+   Regression vs last release: aggregate quality delta must be >= -0.03 (IN11).
+
+3. DEPLOYMENT STEPS
+   Step 1: Deploy to staging; run the full golden dataset evaluation (Task 3).
+   Step 2: Canary 5% of production traffic; watch Langfuse quality + Grafana latency 30 min.
+   Step 3: No regression -> promote 25% -> 100% over 2 hours.
+   Step 4: Monitor 24 hours post-deploy; keep previous version warm for instant rollback.
+
+4. ROLLBACK TRIGGER CONDITIONS
+   Any gate metric below threshold in a rolling 1-hour window.
+   P95 latency > 3000 ms for 3 consecutive minutes.
+   Error rate > 2% for 5 consecutive minutes.
+   Daily spend > $60 (120% of expected daily budget from Task 4).
+
+5. ROLLBACK STEPS (target: < 30 minutes)
+   T+0  : On-call engineer declares rollback.
+   T+5  : Flip feature flag -> 100% traffic to the previous known-good version.
+   T+10 : Confirm Langfuse metrics returning to baseline.
+   T+20 : Notify stakeholders; open a post-incident review ticket.
+   T+30 : Rollback complete; production stable on previous version.
+
+   ARB -- "A prompt change drops faithfulness 0.88 -> 0.76. How fast can you roll back?"
+   0.76 is below the 0.85 gate, so the rolling-window monitor fires within minutes and
+   the on-call flips the feature flag at T+5. Because the change shipped behind a flag,
+   rollback is a config flip (no rebuild/redeploy) and completes well inside the 30-minute
+   target -- typically under 10 minutes to restore the prior prompt version.
+
+6. ON-CALL RUNBOOK SUMMARY
+   Who  : ML Platform on-call (PagerDuty rotation).
+   Check: Langfuse (quality/traces), Grafana (latency/cost), structured error logs.
+   First 5 actions:
+     1. Open Langfuse trace explorer, filter last 30 minutes.
+     2. Check latency distribution -- is P95/P99 spiking?
+     3. Check faithfulness score -- any drop from the 0.88 baseline?
+     4. Check error rate -- are spans returning error status (LLM/Pinecone)?
+     5. If any SLO breached: execute the rollback procedure in section 5.
