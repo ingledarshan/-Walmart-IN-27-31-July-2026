@@ -1,0 +1,74 @@
+WALMART RETAIL ASSISTANT -- DEPLOYMENT READINESS ASSESSMENT
+============================================================
+Assessment Date  : 2026-07-30 06:09
+Assessor         : Walmart Global Tech Academy -- India Track
+Application      : Walmart Retail Assistant (GenAI)
+Programme Module : 3 -- Production-Ready AI Systems
+
+DOMAIN 1: RELIABILITY AND OBSERVABILITY (IN07)
+-------------------------------------------------------
+Score: 11 / 12
+
+Checks:
+  [PASS] Input length and character validation
+  [PASS] Prompt injection detection
+  [PASS] System prompt does not leak architecture
+  [PASS] Temperature <= 0.2 (deterministic)
+  [PASS] Output guardrail (toxicity / PII filter)
+  [PASS] Hallucination grounding check
+  [PASS] Structured audit log per request
+  [PASS] Graceful fallback on API failure
+  [PASS] SLA budget enforced (timeout per call)
+  [PASS] Content moderation on input and output
+  [PASS] PII masking before logging
+  [FAIL] Rate limiting per user / session
+
+DOMAIN 2: SECURITY CONTROLS (IN08)
+-------------------------------------------------------
+Score: 9 / 9
+
+Checks:
+  [PASS] Direct prompt injection detection
+  [PASS] Jailbreak resistance (patterns + never-list)
+  [PASS] PII masking on user input
+  [PASS] PII masking on LLM output
+  [PASS] PII-safe audit logging (hashed)
+  [PASS] Data exfiltration controls
+  [PASS] OpenAI Moderation API integrated
+  [PASS] Anchored system prompt (constraint repetition)
+  [PASS] Indirect injection sanitiser (tool/RAG outputs)
+
+DOMAIN 3: GOVERNANCE, SCALING, SLA/SLO, RESILIENCE (IN09)
+-------------------------------------------------------
+Score: 9 / 9
+
+Checks:
+  [PASS] Data lineage tracking per LLM call
+  [PASS] Prompt versioning and registry
+  [PASS] Structured audit trail (request_id, hashes)
+  [PASS] Model routing (complexity-based)
+  [PASS] Streaming enabled for interactive responses
+  [PASS] SLO measurement framework (P50/P95/P99)
+  [PASS] Fallback model chain implemented
+  [PASS] Rate limiting (sliding window per session)
+  [PASS] Graceful degradation (cached + default responses)
+
+============================================================
+FINAL ASSESSMENT
+============================================================
+IN07 Reliability Score :  11 / 12
+IN08 Security Score    :   9 / 9
+IN09 Governance Score  :   9 / 9
+TOTAL                  :  29 / 30
+
+VERDICT: APPROVED with continuous monitoring
+
+MONITORING REQUIREMENTS (post-deployment):
+  1. P95 latency alert: > 2000ms triggers PagerDuty
+  2. Block rate alert:  > 1% triggers security review
+  3. Hallucination rate: sampled weekly via ground-check pipeline
+  4. PII alert log:     reviewed daily by data governance team
+  5. SLO burn rate:     30-day rolling dashboard (Grafana / Databricks)
+
+NEXT REVIEW DATE: 30 days post-deployment
+============================================================
